@@ -16,6 +16,10 @@
 use evm::evm;
 use primitive_types::U256;
 use serde::Deserialize;
+use evm::Txn;
+use evm::Block;
+
+ 
 
 #[derive(Debug, Deserialize)]
 struct Evmtest {
@@ -23,6 +27,9 @@ struct Evmtest {
     hint: String,
     code: Code,
     expect: Expect,
+    tx: Option<Txn>,
+    block: Option<Block>,
+    
 }
 
 #[derive(Debug, Deserialize)]
@@ -40,6 +47,16 @@ struct Expect {
 }
 
 
+// #[derive(Debug, Deserialize)]
+// pub struct Txn{
+//     value: Option<String>,
+//     data: Option<String>,
+//     from: Option<String>,
+//     to: Option<String>,
+//     gas: Option<String>,
+    
+//     gasprice:Option<String>,
+// }
 fn main() {
     let text = std::fs::read_to_string("../evm.json").unwrap();
     let data: Vec<Evmtest> = serde_json::from_str(&text).unwrap();
@@ -50,8 +67,9 @@ fn main() {
         println!("Test {} of {}: {}", index + 1, total, test.name);
 
         let code: Vec<u8> = hex::decode(&test.code.bin).unwrap();
-
-        let result = evm(&code);
+         let txn: &Option<Txn>=&test.tx;
+         let block = &test.block;
+        let result = evm(&code,txn,block);
 
         let mut expected_stack: Vec<U256> = Vec::new();
         if let Some(ref stacks) = test.expect.stack {
